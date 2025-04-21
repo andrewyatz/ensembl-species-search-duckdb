@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Path
 import duckdb
 from typing import Optional
+import os
 
 app = FastAPI()
 
@@ -14,7 +15,7 @@ async def search_items(
     prefix: str = Path(..., min_length=3), limit: Optional[int] = 1000
 ):
     query = f"""
-      SELECT s.accession, s.scientific_name, s.common_name, s.genome_uuid, s.search_boost, fts_main_species.match_bm25(s.genome_uuid, ?) as score
+      SELECT s.accession, s.scientific_name, s.genome_uuid, s.tol_id, s.common_name, s.biosample_id, s.strain, s.taxonomy_id, s.species_taxonomy_id, s.search_boost, fts_main_species.match_bm25(s.genome_uuid, ?) as score
 from species s
 where score is not null
 order by search_boost desc, score desc
@@ -26,10 +27,15 @@ limit {limit};
             {
                 "accession": row[0],
                 "scientific_name": row[1],
-                "common_name": row[2],
-                "genome_uuid": row[3],
-                "search_boost": row[4],
-                "score": row[5],
+                "genome_uuid": row[2],
+                "tol_id" : row[3],
+                "common_name" : row[4],
+                "biosample_id" : row[5],
+                "strain" : row[6],
+                "taxonomy_id" : row[7],
+                "species_taxonomy_id" : row[8],
+                "search_boost": row[9],
+                "score": row[10]
             }
             for row in results
         ]
@@ -41,7 +47,7 @@ limit {limit};
 @app.get("/species/taxonomy/{taxonomy_id}")
 async def search_items(taxonomy_id: int = Path(..., ge=1), limit: Optional[int] = 1000):
     query = f"""
-      SELECT s.accession, s.scientific_name, s.common_name, s.genome_uuid
+      SELECT s.accession, s.scientific_name, s.genome_uuid, s.tol_id, s.common_name, s.biosample_id, s.strain, s.taxonomy_id, s.species_taxonomy_id
 from species s
 join computed_hierarchy ch on s.taxonomy_id = ch.organism_taxonomy_id
 where array_contains(ch.ancestor_taxon_ids, ?)
@@ -54,8 +60,13 @@ limit {limit};
             {
                 "accession": row[0],
                 "scientific_name": row[1],
-                "common_name": row[2],
-                "genome_uuid": row[3],
+                "genome_uuid": row[2],
+                "tol_id" : row[3],
+                "common_name" : row[4],
+                "biosample_id" : row[5],
+                "strain" : row[6],
+                "taxonomy_id" : row[7],
+                "species_taxonomy_id" : row[8]
             }
             for row in results
         ]
@@ -67,4 +78,4 @@ limit {limit};
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

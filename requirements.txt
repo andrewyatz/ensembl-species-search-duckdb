@@ -1,6 +1,4 @@
 fastapi
 uvicorn
 duckdb
-duckdb-extensions
-duckdb-extension-fts
-duckdb-extension-mysql
+

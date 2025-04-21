@@ -1,0 +1,13 @@
+.git
+__pycache__
+*.pyc
+*.log
+.venv
+venv
+instance/
+test_*.py
+tests/
+README.md
+.gitignore
+Dockerfile
+docker-compose.yml
