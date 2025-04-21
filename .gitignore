@@ -1,0 +1,7 @@
+__pycache__/
+.venv/
+*.pyc
+*.log
+*.db # If you don't want to track the database file content
+.hypothesis/unicode_data/13.0.0/charmap.json.gz
+searcher.duckdb
