@@ -1,10 +1,5 @@
 import duckdb
 
-# from duckdb_extensions import extension_importer
-
-# extension_importer.import_extension("fts")
-# extension_importer.import_extension("mysql")
-
 target_db = "searcher.duckdb"
 
 con = duckdb.connect(":memory:")
