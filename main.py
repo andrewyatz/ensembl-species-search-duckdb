@@ -1,18 +1,20 @@
-from fastapi import FastAPI, Path
+from fastapi import FastAPI, Path, Query
 import duckdb
 from typing import Optional
 import os
 
 app = FastAPI()
 
+N_GRAM_SIZE = 3
+
 # Global variable to hold the database connection
 target_db = "searcher.duckdb"
 con = duckdb.connect(target_db)
 
 
-@app.get("/species/search/{prefix}")
+@app.get("/species/search")
 async def search_items(
-    prefix: str = Path(..., min_length=3), limit: Optional[int] = 1000
+    q: str = Query(..., min_length=3), limit: Optional[int] = 1000
 ):
     query = f"""
       SELECT s.accession, s.scientific_name, s.genome_uuid, s.tol_id, s.common_name, s.biosample_id, s.strain, s.taxonomy_id, s.species_taxonomy_id, s.search_boost, fts_main_species.match_bm25(s.genome_uuid, ?) as score
@@ -21,7 +23,7 @@ where score is not null
 order by search_boost desc, score desc
 limit {limit};
 """
-    results = con.execute(query, (prefix,)).fetchall()
+    results = con.execute(query, (q,)).fetchall()
     json = {
         "items": [
             {
@@ -74,6 +76,40 @@ limit {limit};
     json["meta"] = {"items": len(results), "limit": limit}
     return json
 
+def generate_query_ngrams(query, n):
+    query = query.lower()
+    return set(query[i:i+n] for i in range(len(query) - n + 1))
+
+@app.get("/taxonomy/search")
+async def taxonomy_search(q: str = Query(..., min_length=1), limit: Optional[int] = 1000):
+    """
+    Provides autocomplete suggestions based on n-gram matching.
+    """
+    if len(q) < N_GRAM_SIZE:
+        return []  # Not enough characters to form an n-gram
+
+    query_ngrams = generate_query_ngrams(q, N_GRAM_SIZE)
+    results = con.execute(f"""
+        SELECT t.taxonomy_id, t.name
+        FROM taxonomy_ngrams tng
+        JOIN taxonomy t ON tng.taxon_id = t.taxon_id
+        WHERE tng.ngram IN ({', '.join(['?' for _ in query_ngrams])})
+        GROUP BY t.id, t.name
+        ORDER BY COUNT(DISTINCT tng.ngram) DESC, t.name
+        LIMIT {limit};
+    """, list(query_ngrams)).fetchall()
+    con.close()
+    json = {
+        "items" : [
+            {
+                "taxonomy_id" : row[0],
+                "name" : row[1]
+            }
+            for row in results
+        ]
+    } 
+    json["meta"] = {"items": len(results), "limit": limit}
+    return json
 
 if __name__ == "__main__":
     import uvicorn
