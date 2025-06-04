@@ -93,6 +93,7 @@ class SpeciesFts(CreateSQLiteFTS):
     biosample_id,
     strain,
     label,
+    search_boost,
     tokenize='unicode61'
 )
 """
@@ -110,7 +111,8 @@ class SpeciesFts(CreateSQLiteFTS):
         common_name, 
         scientific_name, 
         biosample_id, 
-        strain, 
+        strain,
+        search_boost,
         label)
     SELECT 
         genome_uuid, 
@@ -123,7 +125,8 @@ class SpeciesFts(CreateSQLiteFTS):
         common_name, 
         scientific_name, 
         biosample_id, 
-        strain, 
+        strain,
+        search_boost,
         label
     FROM species
 """

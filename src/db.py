@@ -12,7 +12,7 @@ class SQLiteDb:
     def create(name, path: str = ":memory:"):
         return SQLiteDb(path, name)
 
-    def __init__(self, name, path):
+    def __init__(self, name: str, path: str):
         self.name = name
         self.path = path
         self._con = None
@@ -43,7 +43,7 @@ class DuckDb:
         con = duckdb.connect(db)
         return DuckDb(con, db)
 
-    def __init__(self, con, name):
+    def __init__(self, con, name: str):
         self.con = con
         self.name = name
 
@@ -51,24 +51,32 @@ class DuckDb:
         results = self.con.sql("select current_catalog()").fetchall()
         return results[0][0]
 
-    def switch(self, catalog):
+    def switch(self, catalog: str):
         previous_catalog = self.current_catalog()
         logging.info(f"Switching to {catalog}")
         self.con.execute(f"USE {catalog}")
         return previous_catalog
 
-    def detach(self, catalog):
+    def detach(self, catalog: str):
         logging.info(f"Detaching from {catalog}")
         self.con.execute(f"DETACH {catalog}")
 
-    def load_extension(self, extension, install=True):
+    def load_extension(self, extension: str, install=True):
         if install:
             logging.info(f"Installing extension {extension}")
             self.con.execute(f"INSTALL {extension}")
         logging.info(f"Loading extension {extension}")
         self.con.execute(f"LOAD {extension}")
 
-    def connect_to_mysql(self, name, host, user, database, password=None, port=3306):
+    def connect_to_mysql(
+        self,
+        name: str,
+        host: str,
+        user: str,
+        database: str,
+        password: str = None,
+        port: int = 3306,
+    ):
         logging.info(f"Connecting to MySQL as {name}")
         connection_string = f"host={host} user={user} port={port} database={database}"
         if password:
@@ -78,13 +86,13 @@ class DuckDb:
         self.con.execute(sql)
         logging.info(f"MySQL attached as {name}")
 
-    def connect_to_sqlite(self, name, path):
+    def connect_to_sqlite(self, name: str, path: str):
         logging.info(f"Connecting to SQLite as {name}")
         connection_string = f"ATTACH '{path}' as {name} (TYPE sqlite)"
         self.con.execute(connection_string)
         logging.info(f"SQLite attached as {name}")
 
-    def connect_to_duckdb(self, name, path):
+    def connect_to_duckdb(self, name: str, path: str):
         logging.info(f"Connecting to DuckDb as {name}")
         connection_string = f"ATTACH '{path}' as {name}"
         self.con.execute(connection_string)
@@ -95,7 +103,7 @@ class DuckDb:
             logging.info(f"Dropping table {table}")
             self.con.execute(f"DROP TABLE {table}")
 
-    def persist_database(self, path, overwrite=True):
+    def persist_database(self, path: str, overwrite: bool = True):
         if overwrite and os.path.exists(path):
             os.unlink(path)
         self.connect_to_duckdb(name="persist", path=path)
@@ -127,7 +135,7 @@ class CreateIndex:
             sql = f"create index {index_name} on {target_table_name}({col})"
             logging.debug(f"Index SQL: {sql}")
             self.con.execute(sql)
-            logging.info(f"Created index {index_name} on {self.db}.{self.table}")
+            logging.info(f"Created index {index_name} on {target_table_name}")
 
 
 class CopyTable:

@@ -14,7 +14,7 @@ class Taxonomy:
         logging.info("Creating taxonomy names lookup")
         self._create_taxonomy_names()
         logging.info("Cleaning up imported unused tables")
-        self._cleanup();
+        self._cleanup()
 
     def _copy_tables(self):
         current_catalog = self.duckdb.current_catalog()
@@ -44,7 +44,7 @@ class Taxonomy:
             "ncbi_taxa_name",
             [["taxon_id", "name_class"]],
         ).run()
-    
+
     def _cleanup(self):
         self.duckdb.drop_tables(["ncbi_taxa_node", "ncbi_taxa_name"])
 
