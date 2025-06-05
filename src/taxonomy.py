@@ -3,8 +3,9 @@ import logging
 
 
 class Taxonomy:
-    def __init__(self, duckdb: DuckDb):
+    def __init__(self, duckdb: DuckDb, ignore_genbank_hidden: bool = False):
         self.duckdb = duckdb
+        self.ignore_genbank_hidden = ignore_genbank_hidden
 
     def run(self):
         logging.info("Copying taxonomy and organism tables from MySQL")
@@ -115,12 +116,14 @@ class Taxonomy:
 CREATE TABLE taxonomy_names AS
 SELECT n1.taxon_id as taxonomy_id, n1.name as scientific_name, n2.name as genbank_common_name, n3.name as common_name, n4.name as equivalent_name
 FROM ncbi_taxa_node ntn
-JOIN ncbi_taxa_name n1 on ntn.taxon_id = n1.taxon_id and n1.name_class = 'scientific name'
-LEFT JOIN ncbi_taxa_name n2 on n1.taxon_id = n2.taxon_id and n2.name_class = 'genbank common name'
-LEFT JOIN ncbi_taxa_name n3 on n1.taxon_id = n3.taxon_id and n3.name_class = 'common name'
-LEFT JOIN ncbi_taxa_name n4 on n1.taxon_id = n4.taxon_id and n4.name_class = 'equivalent name'
-WHERE ntn.genbank_hidden_flag = 0
+JOIN ncbi_taxa_name n1 on (ntn.taxon_id = n1.taxon_id and n1.name_class = 'scientific name')
+LEFT JOIN ncbi_taxa_name n2 on (n1.taxon_id = n2.taxon_id and n2.name_class = 'genbank common name')
+LEFT JOIN ncbi_taxa_name n3 on (n1.taxon_id = n3.taxon_id and n3.name_class = 'common name')
+LEFT JOIN ncbi_taxa_name n4 on (n1.taxon_id = n4.taxon_id and n4.name_class = 'equivalent name')
 """
+        if(self.ignore_genbank_hidden):
+            # Set hidden flag to 0 means we will ignore anything genbank hides
+            sql = sql + " WHERE ntn.genbank_hidden_flag = 0"
         self.duckdb.con.execute(sql)
         logging.info("Finished building names")
 

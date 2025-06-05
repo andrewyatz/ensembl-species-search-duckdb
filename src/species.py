@@ -49,7 +49,10 @@ class Species:
     def species_sql(self, db="mysqldb"):
         sql = f"""
     insert into species
-    select a.accession, a.name, a.assembly_default, a.tol_id, a.ensembl_name, a.assembly_uuid, a.url_name, g.genome_uuid, g.production_name, o.common_name, o.scientific_name, o.biosample_id, o.strain, er.is_current, er.label, o.taxonomy_id, o.species_taxonomy_id, 0 as search_boost
+    select 
+        a.accession, a.name, a.assembly_default, a.tol_id, a.ensembl_name, a.assembly_uuid, 
+        a.url_name, g.genome_uuid, g.production_name, o.common_name, o.scientific_name, 
+        o.biosample_id, o.strain, er.is_current, er.label, o.taxonomy_id, o.species_taxonomy_id, 0 as search_boost
     from {db}.assembly a
     join {db}.genome g on a.assembly_id = g.assembly_id
     join {db}.organism o on g.organism_id = o.organism_id
