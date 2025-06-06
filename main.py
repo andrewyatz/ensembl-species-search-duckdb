@@ -34,7 +34,7 @@ async def search_species(
 @app.get("/species/taxonomy/{taxonomy_id}")
 async def search_items(taxonomy_id: int = Path(..., ge=1), limit: Optional[int] = 1000):
     query = f"""
-      SELECT s.species_id, s.accession, s.scientific_name, s.genome_uuid, s.tol_id, s.common_name, s.biosample_id, s.strain, s.taxonomy_id, s.species_taxonomy_id, s.is_current, s.release_label, s.release_type
+      SELECT s.species_id, s.accession, s.scientific_name, s.genome_uuid, s.tol_id, s.common_name, s.biosample_id, s.strain, s.taxonomy_id, s.species_taxonomy_id, s.is_current, s.release_label, s.release_type, list_position(ancestor_taxon_ids, ?) as taxonomy_position
 from species s
 join computed_hierarchy ch on s.taxonomy_id = ch.organism_taxonomy_id
 where array_contains(ch.ancestor_taxon_ids, ?)
@@ -42,7 +42,7 @@ or s.taxonomy_id =?
 limit {limit};
 """
     cursor = duckdb.con.cursor()
-    results = cursor.execute(query, (taxonomy_id, taxonomy_id)).fetchall()
+    results = cursor.execute(query, (taxonomy_id, taxonomy_id, taxonomy_id)).fetchall()
     items = results_to_hash_list(results, cursor)
     json = {"items": items}
     json["meta"] = {"items": len(results), "limit": limit}
