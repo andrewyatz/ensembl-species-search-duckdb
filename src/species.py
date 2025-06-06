@@ -98,6 +98,7 @@ class SpeciesFts(CreateSQLiteFTS):
     def fts_ddl(self):
         return """
     CREATE VIRTUAL TABLE species_fts USING fts5(
+    species_id,
     genome_uuid,
     accession,
     name,
@@ -110,6 +111,8 @@ class SpeciesFts(CreateSQLiteFTS):
     biosample_id,
     strain,
     release_label,
+    release_type,
+    taxonomy_id,
     search_boost,
     tokenize='unicode61'
 )
@@ -118,6 +121,7 @@ class SpeciesFts(CreateSQLiteFTS):
     def fts_sql(self):
         return """
     INSERT INTO species_fts (
+        species_id,
         genome_uuid, 
         accession, 
         name, 
@@ -129,9 +133,12 @@ class SpeciesFts(CreateSQLiteFTS):
         scientific_name, 
         biosample_id, 
         strain,
-        search_boost,
-        release_label)
+        release_label,
+        release_type,
+        taxonomy_id,
+        search_boost)
     SELECT 
+        species_id,
         genome_uuid, 
         accession, 
         name, 
@@ -143,7 +150,9 @@ class SpeciesFts(CreateSQLiteFTS):
         scientific_name, 
         biosample_id, 
         strain,
-        search_boost,
-        release_label
+        release_label,
+        release_type,
+        taxonomy_id,
+        search_boost
     FROM species
 """
