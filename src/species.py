@@ -12,6 +12,8 @@ class Species:
 
     def run(self):
         con = self.duckdb.con
+        logging.info("Building sequence for IDs")
+        con.execute(self.species_sequence_ddl())
         logging.info("Building species table")
         con.execute(self.species_ddl())
         logging.info("Populating species table")
@@ -23,6 +25,7 @@ class Species:
     def species_ddl(self):
         ddl = """
         CREATE TABLE species (
+        species_id INTEGER,
         accession VARCHAR,
         name VARCHAR,
         assembly_default VARCHAR,
@@ -37,7 +40,8 @@ class Species:
         biosample_id VARCHAR,
         strain VARCHAR,
         is_current BIGINT,
-        label VARCHAR,
+        release_label VARCHAR,
+        release_type VARCHAR,
         taxonomy_id BIGINT,
         species_taxonomy_id BIGINT,
         search_boost BIGINT
@@ -46,18 +50,28 @@ class Species:
         logging.debug(f"Generated DDL: {ddl}")
         return ddl
 
+    def species_sequence_ddl(self):
+        ddl = """
+            CREATE SEQUENCE species_sequence START WITH 1 INCREMENT by 1
+        """
+        logging.debug(f"Generated DDL: {ddl}")
+        return ddl
+
     def species_sql(self, db="mysqldb"):
         sql = f"""
     insert into species
-    select 
+    select
+        nextval('species_sequence'),
         a.accession, a.name, a.assembly_default, a.tol_id, a.ensembl_name, a.assembly_uuid, 
         a.url_name, g.genome_uuid, g.production_name, o.common_name, o.scientific_name, 
-        o.biosample_id, o.strain, er.is_current, er.label, o.taxonomy_id, o.species_taxonomy_id, 0 as search_boost
+        o.biosample_id, o.strain, er.is_current, er.label, er.release_type, o.taxonomy_id, o.species_taxonomy_id, 0 as search_boost
     from {db}.assembly a
     join {db}.genome g on a.assembly_id = g.assembly_id
     join {db}.organism o on g.organism_id = o.organism_id
     join {db}.genome_release gr on g.genome_id = gr.genome_id
-    join {db}.ensembl_release er on gr.release_id = er.release_id;
+    join {db}.ensembl_release er on gr.release_id = er.release_id
+    where (er.release_type = 'integrated' and er.is_current = 1) 
+    or (gr.is_current = 1 and er.release_type= 'partial')
 """
         logging.debug(f"Generated SQL: {sql}")
         return sql
@@ -72,7 +86,7 @@ class Species:
         logging.info("Boosted")
 
     def build_indexes(self):
-        species_indexes = ("taxonomy_id", "genome_uuid")
+        species_indexes = ("taxonomy_id", "genome_uuid", "species_id")
         indexer = CreateIndex(self.duckdb.con, "species", species_indexes)
         indexer.run()
 
@@ -95,7 +109,7 @@ class SpeciesFts(CreateSQLiteFTS):
     scientific_name,
     biosample_id,
     strain,
-    label,
+    release_label,
     search_boost,
     tokenize='unicode61'
 )
@@ -116,7 +130,7 @@ class SpeciesFts(CreateSQLiteFTS):
         biosample_id, 
         strain,
         search_boost,
-        label)
+        release_label)
     SELECT 
         genome_uuid, 
         accession, 
@@ -130,6 +144,6 @@ class SpeciesFts(CreateSQLiteFTS):
         biosample_id, 
         strain,
         search_boost,
-        label
+        release_label
     FROM species
 """

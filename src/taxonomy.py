@@ -3,9 +3,15 @@ import logging
 
 
 class Taxonomy:
-    def __init__(self, duckdb: DuckDb, ignore_genbank_hidden: bool = False):
+    def __init__(
+        self,
+        duckdb: DuckDb,
+        ignore_genbank_hidden: bool = False,
+        taxonomy_source: str = "mysqldb",
+    ):
         self.duckdb = duckdb
         self.ignore_genbank_hidden = ignore_genbank_hidden
+        self.taxonomy_source = taxonomy_source
 
     def run(self):
         logging.info("Copying taxonomy and organism tables from MySQL")
@@ -30,7 +36,7 @@ class Taxonomy:
 
         CopyTable(
             self.duckdb.con,
-            "mysqldb",
+            self.taxonomy_source,
             current_catalog,
             "ncbi_taxa_node",
             "ncbi_taxa_node",
@@ -39,7 +45,7 @@ class Taxonomy:
 
         CopyTable(
             self.duckdb.con,
-            "mysqldb",
+            self.taxonomy_source,
             current_catalog,
             "ncbi_taxa_name",
             "ncbi_taxa_name",
@@ -121,7 +127,7 @@ LEFT JOIN ncbi_taxa_name n2 on (n1.taxon_id = n2.taxon_id and n2.name_class = 'g
 LEFT JOIN ncbi_taxa_name n3 on (n1.taxon_id = n3.taxon_id and n3.name_class = 'common name')
 LEFT JOIN ncbi_taxa_name n4 on (n1.taxon_id = n4.taxon_id and n4.name_class = 'equivalent name')
 """
-        if(self.ignore_genbank_hidden):
+        if self.ignore_genbank_hidden:
             # Set hidden flag to 0 means we will ignore anything genbank hides
             sql = sql + " WHERE ntn.genbank_hidden_flag = 0"
         self.duckdb.con.execute(sql)

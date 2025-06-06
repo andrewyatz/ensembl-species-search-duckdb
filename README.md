@@ -9,6 +9,17 @@ By running the `generate_lookups.py` script we generate two resources
 - `search.duckdb`: contains taxonomy hierachy lookups, taxonomy names and species information
 - `search_fts.sqlite`: contains full-text searching for the taxonomy and species names
 
+## Generating a local copy of taxonomy
+
+Due to the size of the taxonomy tables you can take a local copy of these using `build_local_taxa_tables.py`. This will generate a duckdb file called `local_taxonomy.duckdb`.
+
+## Config file
+
+You can provide a TOML file to the program to configure the building of the resources. An example is provided in `config.toml.example`. The program will attempt to load this from:
+
+- The environment variable `SEARCH_CONFIG` which is set to a path to the file
+- Defaults to `config.toml`
+
 ### DuckDB tables
 
 ### Computed tables

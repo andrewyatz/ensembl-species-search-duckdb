@@ -1,0 +1,5 @@
+[source_database]
+host = "hostname"
+port = 3306
+user = "user"
+database = "metadata_db"

@@ -7,3 +7,5 @@ __pycache__/
 searcher.duckdb
 *.db
 *.sqlite
+config.toml
+*.duckdb
