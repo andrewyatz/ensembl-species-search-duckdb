@@ -9,7 +9,7 @@ from src.util import get_config
 
 DEBUG = False
 
-target_duckdb_db = "local_taxa.duckdb"
+target_duckdb_db = "local_taxonomy.duckdb"
 config = get_config()
 db_config = config["source_database"]
 
