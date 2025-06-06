@@ -11,3 +11,5 @@ README.md
 .gitignore
 Dockerfile
 docker-compose.yml
+local_taxonomy.duckdb
+config.toml.examples
