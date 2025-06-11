@@ -2,6 +2,14 @@
 
 This project provides a basic REST API that interacts with a DuckDB and SQLite database to find genomes and species hosted in Ensembl.
 
+## Running the web app
+
+```bash
+uvicorn main:app
+```
+
+Navigate to <http://127.0.0.1:8000/docs> to find the OpenAPI spec descriptions.
+
 ## Resources created
 
 By running the `generate_lookups.py` script we generate two resources

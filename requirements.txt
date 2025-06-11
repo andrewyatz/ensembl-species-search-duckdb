@@ -2,3 +2,4 @@ fastapi
 uvicorn
 duckdb
 toml
+requests
