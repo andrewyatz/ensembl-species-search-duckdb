@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Path, Query
+from starlette.responses import FileResponse
 from typing import Optional
 import os
 from src.db import DuckDb, SQLiteDb
@@ -15,13 +16,18 @@ duckdb = DuckDb.create("search.duckdb")
 sqlite = SQLiteDb.create("search_fts.sqlite", "search_fts.sqlite")
 
 
+@app.get("/", include_in_schema=False)
+async def read_index():
+    return FileResponse("static/index.html")
+
+
 @app.get("/species/search")
 async def search_species(q: str = Query(..., min_length=3), limit: Optional[int] = 100):
     """
     For a given string search for genomes held within Ensembl
     """
     query = f"""
-    SELECT s.accession, s.scientific_name, s.genome_uuid, s.tol_id, s.common_name, s.biosample_id, s.strain, bm25(species_fts) AS score, search_boost
+    SELECT s.name, s.accession, s.scientific_name, s.assembly_default, s.tol_id, s.common_name, s.biosample_id, s.strain, s.genome_uuid, s.release_label, s.release_type, s.taxonomy_id, bm25(species_fts) AS score, search_boost
     FROM species_fts s
     WHERE s.species_fts MATCH ?
     order by s.search_boost desc, score desc
@@ -42,7 +48,7 @@ async def intersect_taxonomy_by_taxon_id(
     taxonomy_id: int = Path(..., ge=1), limit: Optional[int] = 100
 ):
     """
-    For a given taxonomy ID, bring back the species in Ensembl that intersect that 
+    For a given taxonomy ID, bring back the species in Ensembl that intersect that
     identifier i.e. they are children bound by that taxonomic node
     """
     items = _get_intersecting_items(taxonomy_id, limit)
@@ -55,7 +61,7 @@ async def intersect_taxonomy_by_taxon_id(
 
 def _get_intersecting_items(taxonomy_id: int, limit):
     query = """
-      SELECT s.species_id, s.accession, s.scientific_name, s.genome_uuid, s.tol_id, s.common_name, s.biosample_id, s.strain, s.taxonomy_id, s.species_taxonomy_id, s.is_current, s.release_label, s.release_type, coalesce(list_position(ch.ancestor_taxon_ids, ?), 0) as taxonomy_step
+      SELECT s.name, s.accession, s.scientific_name, s.assembly_default, s.tol_id, s.common_name, s.biosample_id, s.strain, s.taxonomy_id, s.species_taxonomy_id, s.is_current, s.release_label, s.release_type, s.genome_uuid, coalesce(list_position(ch.ancestor_taxon_ids, ?), 0) as taxonomy_step
 from species s
 join computed_hierarchy ch on s.taxonomy_id = ch.organism_taxonomy_id
 where list_contains(ch.ancestor_taxon_ids, ?)
@@ -115,7 +121,7 @@ async def intersect_taxonomy(
             seen_genome[candidate["genome_uuid"]] = True
             candidate["intersecting_taxon"] = taxon
             candidate["total_distance"] = candidate["taxonomy_step"] + taxon["distance"]
-            genomes.append(candidate)
+            genomes.append(dict({"total_distance":(candidate["taxonomy_step"] + taxon["distance"])}, **candidate))
 
     genomes.sort(key=lambda x: (x["total_distance"], x["accession"]))
     if len(genomes) > limit:
