@@ -21,7 +21,7 @@ async def read_index():
     return FileResponse("static/index.html")
 
 
-@app.get("/species/search")
+@app.get("/species/search", summary="Find a species using Full Text Search (FTS)")
 async def search_species(q: str = Query(..., min_length=3), limit: Optional[int] = 100):
     """
     For a given string search for genomes held within Ensembl
@@ -43,7 +43,10 @@ async def search_species(q: str = Query(..., min_length=3), limit: Optional[int]
     return json
 
 
-@app.get("/species/taxonomy/{taxonomy_id}")
+@app.get(
+    "/species/taxonomy/{taxonomy_id}",
+    summary="Find species in Ensembl that are a descendent of a taxonomic node",
+)
 async def intersect_taxonomy_by_taxon_id(
     taxonomy_id: int = Path(..., ge=1), limit: Optional[int] = 100
 ):
@@ -89,7 +92,10 @@ or s.taxonomy_id =?
 _purl_prefix = "http://purl.obolibrary.org/obo/NCBITaxon_"
 
 
-@app.get("/species/intersect/{taxonomy_id}")
+@app.get(
+    "/species/intersect/{taxonomy_id}",
+    summary="Find the nearest relative in Ensembl to a given taxonomic node (max_taxon_level defaults to order)",
+)
 async def intersect_taxonomy(
     taxonomy_id: int = Path(..., ge=1),
     max_taxon_level="order",
@@ -121,7 +127,16 @@ async def intersect_taxonomy(
             seen_genome[candidate["genome_uuid"]] = True
             candidate["intersecting_taxon"] = taxon
             candidate["total_distance"] = candidate["taxonomy_step"] + taxon["distance"]
-            genomes.append(dict({"total_distance":(candidate["taxonomy_step"] + taxon["distance"])}, **candidate))
+            genomes.append(
+                dict(
+                    {
+                        "total_distance": (
+                            candidate["taxonomy_step"] + taxon["distance"]
+                        )
+                    },
+                    **candidate,
+                )
+            )
 
     genomes.sort(key=lambda x: (x["total_distance"], x["accession"]))
     if len(genomes) > limit:
@@ -131,7 +146,10 @@ async def intersect_taxonomy(
     return json
 
 
-@app.get("/taxonomy/hierarchy/{taxonomy_id}")
+@app.get(
+    "/taxonomy/hierarchy/{taxonomy_id}",
+    summary="Return the ancestors of a taxonomic node",
+)
 def get_hierarchy(taxonomy_id: int = Path(..., ge=1), include_root: bool = False):
     """
     Get the hierarchy of a taxonomic node. Uses OLSv4 from EMBL-EBI in the background
