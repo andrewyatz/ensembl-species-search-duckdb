@@ -9,3 +9,4 @@ searcher.duckdb
 *.sqlite
 config.toml
 *.duckdb
+tmp

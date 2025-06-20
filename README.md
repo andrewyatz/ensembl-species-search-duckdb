@@ -4,22 +4,81 @@ This project provides a basic REST API that interacts with a DuckDB and SQLite d
 
 ## Running the web app
 
+When running you can navigate to <http://127.0.0.1:8000> to find the main interface or <http://127.0.0.1:8000/docs> to access the OpenAPI docs.
+
+### Local installation & running
+
 ```bash
-uvicorn main:app
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install -r requirements.txt
 ```
 
-Navigate to <http://127.0.0.1:8000/docs> to find the OpenAPI spec descriptions.
+Once installed you can do the following. Make sure you have the search volumes already created.
 
-## Resources created
+```bash
+source .venv/bin/activate
+uvicorn main:app --port 8000
+```
+
+### Running a Docker image
+
+We assume you've created the image `ensembl-species-search:1.0.0` below.
+
+```bash
+docker run --detach --name ensembl-species-search --publish 8000:80 ensembl-species-search:1.0.0
+```
+
+Once finished stop the container like so.
+
+```bash
+docker stop --timeout 5 ensembl-species-search
+```
+
+#### Building a docker image using pre-built lookups
+
+If you have already created the lookups (see below) you can create a base image.
+
+```bash
+docker build -t ensembl-species-search:1.0.0 --target server_prebuilt_lookups .
+```
+
+If you haven't created the lookups you can use the following build command.
+
+```bash
+docker build -t ensembl-species-search:1.0.0 --target server_build_lookups .
+```
+
+Note that building lookups inside of Docker can be more expensive that creating them on the local machine. Use this option with care.
+
+## Creating lookups
+
+**Make sure you have created your `config.toml` if you need to build the lookups.**
+
+## Creating lookups locally
 
 By running the `generate_lookups.py` script we generate two resources
 
 - `search.duckdb`: contains taxonomy hierachy lookups, taxonomy names and species information
 - `search_fts.sqlite`: contains full-text searching for the taxonomy and species names
 
-## Generating a local copy of taxonomy
+### Generating a local copy of taxonomy
 
 Due to the size of the taxonomy tables you can take a local copy of these using `build_local_taxa_tables.py`. This will generate a duckdb file called `local_taxonomy.duckdb`.
+
+### Using Docker to create the lookups
+
+```bash
+docker build -t ensembl-species-search-lookup-builder --target builder .
+```
+
+Once the builder is made you can then issue the build. Note this may take a lot longer than on your local machine.
+
+```bash
+docker run -it --rm --volume $PWD/docker:/app/lookups_data ensembl-species-search-lookup-builder
+```
+
+The lookups are now available in `lookups_data`. Copy them to the application root directory.
 
 ## Config file
 
@@ -158,6 +217,5 @@ select count(*) from ( select * from species where accession like 'GCA_009914755
 
 ## Known bugs
 
-1. We bring back too many rows for species searches because the metadata schema includes data for partial and integrated releases
-2. We have a duplicate issue in taxonomy names where a linked name class e.g. `equivalent name` has more than one entry in the target taxa name table
-3. We cannot create duckdb FTS indexes as both of these create duplicate rows via their "primary key"
+1. We have a duplicate issue in taxonomy names where a linked name class e.g. `equivalent name` has more than one entry in the target taxa name table
+2. We cannot create duckdb FTS indexes as both of these create duplicate rows via their "primary key"
