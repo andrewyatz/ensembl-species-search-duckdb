@@ -8,18 +8,23 @@ class Taxonomy:
         duckdb: DuckDb,
         ignore_genbank_hidden: bool = False,
         taxonomy_source: str = "mysqldb",
+        build_taxonomy_fts: bool = False
     ):
         self.duckdb = duckdb
         self.ignore_genbank_hidden = ignore_genbank_hidden
         self.taxonomy_source = taxonomy_source
+        self.build_taxonomy_fts = build_taxonomy_fts
 
     def run(self):
         logging.info("Copying taxonomy and organism tables from MySQL")
         self._copy_tables()
         logging.info("Computing Taxonomy hierarchy")
         self._create_ncbi_hierarchy_lookup()
-        logging.info("Creating taxonomy names lookup")
-        self._create_taxonomy_names()
+        if self.build_taxonomy_fts:
+            logging.info("Creating taxonomy names lookup")
+            self._create_taxonomy_names()
+        else:
+            logging.info("Skipping building taxonomy names lookup")
         logging.info("Cleaning up imported unused tables")
         self._cleanup()
 

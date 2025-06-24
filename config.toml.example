@@ -1,5 +1,19 @@
+# Can be ommitted and if so uses the basic console logging. 
+# Otherwise this should be set to the Python logging format
+log_config="log.conf"
+
+# Set to define source of data to the builder scripts. Can be 
+# omitted if you're running just the server
 [source_database]
 host = "hostname"
 port = 3306
 user = "user"
 database = "metadata_db"
+
+# Set if you have changed the default names for the lookups
+[lookups]
+duckdb_search = "search.duckdb"
+sqlite_fts = "search_fts.sqlite"
+local_taxonomy = "local_taxonomy.duckdb"
+build_taxonomy_fts = false
+

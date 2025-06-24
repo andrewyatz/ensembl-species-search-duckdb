@@ -6,14 +6,18 @@ from src.db import DuckDb, SQLiteDb
 import logging
 import requests
 import urllib
+from src.config import get_config
 
-logging.basicConfig(level=logging.INFO)
 
+config = get_config()
+config.enable_logging()
+
+# Build the app
 app = FastAPI()
 
 # Global variables to hold the database connection
-duckdb = DuckDb.create("search.duckdb")
-sqlite = SQLiteDb.create("search_fts.sqlite", "search_fts.sqlite")
+duckdb = DuckDb.create(config.lookups.duckdb_search)
+sqlite = SQLiteDb.create(config.lookups.sqlite_fts, config.lookups.sqlite_fts)
 
 
 @app.get("/", include_in_schema=False)

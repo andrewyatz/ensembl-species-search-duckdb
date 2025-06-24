@@ -10,3 +10,4 @@ searcher.duckdb
 config.toml
 *.duckdb
 tmp
+log.conf

@@ -3,3 +3,5 @@ uvicorn
 duckdb
 toml
 requests
+pydantic
+pydantic-settings[toml]

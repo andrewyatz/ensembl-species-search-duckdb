@@ -1,27 +1,23 @@
 #!/usr/bin/env python3
 
-import logging
-
-logging.basicConfig(level=logging.INFO)
-
 from src.db import DuckDb, CopyTable
-from src.util import get_config
+from src.config import get_config
 
-DEBUG = False
-
-target_duckdb_db = "local_taxonomy.duckdb"
 config = get_config()
-db_config = config["source_database"]
+config.enable_logging()
+
+target_duckdb_db = config.lookups.local_taxonomy
+db_config = config.source_database
 
 duckdb = DuckDb.create()
 
 duckdb.load_extension("mysql")
 duckdb.connect_to_mysql(
     "mysqldb",
-    host=db_config["host"],
-    port=db_config["port"],
-    user=db_config["user"],
-    database=db_config["database"],
+    host=db_config.host,
+    port=db_config.port,
+    user=db_config.user,
+    database=db_config.database,
 )
 
 CopyTable(
