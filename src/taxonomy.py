@@ -8,7 +8,7 @@ class Taxonomy:
         duckdb: DuckDb,
         ignore_genbank_hidden: bool = False,
         taxonomy_source: str = "mysqldb",
-        build_taxonomy_fts: bool = False
+        build_taxonomy_fts: bool = False,
     ):
         self.duckdb = duckdb
         self.ignore_genbank_hidden = ignore_genbank_hidden

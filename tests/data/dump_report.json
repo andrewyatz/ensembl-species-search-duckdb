@@ -1,0 +1,14 @@
+{
+    "compression": "brotli",
+    "data_format": "parquet",
+    "datetime": "2025-06-25T10:43:33.443834",
+    "tables": [
+        "ncbi_taxa_node",
+        "ncbi_taxa_name",
+        "assembly",
+        "genome",
+        "organism",
+        "genome_release",
+        "ensembl_release"
+    ]
+}

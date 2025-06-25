@@ -6,9 +6,10 @@ class Species:
 
     _default_boost = {"GRCh38.p14": 1000, "GRCh37.p13": 900, "%T2T%": 500}
 
-    def __init__(self, duckdb: DuckDb, boost=_default_boost):
+    def __init__(self, duckdb: DuckDb, boost=_default_boost, source_schema="mysqldb"):
         self.duckdb = duckdb
         self.boost = boost
+        self.source_schema = source_schema
 
     def run(self):
         con = self.duckdb.con
@@ -17,7 +18,7 @@ class Species:
         logging.info("Building species table")
         con.execute(self.species_ddl())
         logging.info("Populating species table")
-        con.execute(self.species_sql())
+        con.execute(self.species_sql(db=self.source_schema))
         self.apply_boost()
         logging.info("Building indexes")
         self.build_indexes()

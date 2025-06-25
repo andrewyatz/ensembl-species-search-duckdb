@@ -3,7 +3,6 @@ from starlette.responses import FileResponse
 from typing import Optional
 import os
 from src.db import DuckDb, SQLiteDb
-import logging
 import requests
 import urllib
 from src.config import get_config

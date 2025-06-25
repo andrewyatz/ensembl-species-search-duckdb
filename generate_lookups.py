@@ -35,9 +35,15 @@ duckdb.connect_to_sqlite(sqlite_db_name, sqlite.path)
 Species(duckdb=duckdb).run()
 SpeciesFts(duckdb=duckdb, sqlite=sqlite, indexed_table="species").run()
 
-Taxonomy(duckdb=duckdb, taxonomy_source="taxonomy", build_taxonomy_fts=config.lookups.build_taxonomy_fts).run()
+Taxonomy(
+    duckdb=duckdb,
+    taxonomy_source="taxonomy",
+    build_taxonomy_fts=config.lookups.build_taxonomy_fts,
+).run()
 if config.lookups.build_taxonomy_fts:
-    TaxonomySQLiteFts(duckdb=duckdb, sqlite=sqlite, indexed_table="taxonomy_names").run()
+    TaxonomySQLiteFts(
+        duckdb=duckdb, sqlite=sqlite, indexed_table="taxonomy_names"
+    ).run()
 else:
     logging.getLogger().info("Skipping building the Taxonomy FTS")
 

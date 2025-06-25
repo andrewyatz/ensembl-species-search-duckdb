@@ -44,7 +44,7 @@ species_indexes = ("taxonomy_id", "genome_uuid")
 for col in species_indexes:
     con.execute(f"create index species_{col}_idx on species({col});")
 
-## Now create taxonomy walker
+# Now create taxonomy walker
 print("Creating taxonomy lookup table")
 print("Copying and indexing from mysql")
 con.execute("create table organism as select * from mysqldb.organism;")
@@ -111,7 +111,7 @@ con.execute(
 con.execute("drop table ncbi_taxa_node")
 con.execute("drop table organism")
 
-## Write the database out to disk
+# Write the database out to disk
 print("Writing to disk")
 con.execute(f"attach '{target_db}' as target_db;")
 con.execute("copy from database memory to target_db;")

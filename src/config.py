@@ -13,7 +13,7 @@ from pydantic_settings import (
 )
 
 
-class DatabaseTomlSettings(BaseModel):
+class DatabaseSettings(BaseModel):
     host: str
     port: PositiveInt
     user: str
@@ -30,7 +30,7 @@ class LookupSettings(BaseModel):
 
 class TomlSettings(BaseSettings):
     model_config = SettingsConfigDict(toml_file="config.toml")
-    source_database: Optional[DatabaseTomlSettings] = None
+    source_database: Optional[DatabaseSettings] = None
     lookups: LookupSettings = LookupSettings()
     log_config: Optional[str] = None
 

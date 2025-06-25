@@ -47,21 +47,21 @@ class DuckDb:
         self.con = con
         self.name = name
 
-    def current_catalog(self):
+    def current_catalog(self) -> str:
         results = self.con.sql("select current_catalog()").fetchall()
         return results[0][0]
 
-    def switch(self, catalog: str):
+    def switch(self, catalog: str) -> str:
         previous_catalog = self.current_catalog()
         logging.info(f"Switching to {catalog}")
         self.con.execute(f"USE {catalog}")
         return previous_catalog
 
-    def detach(self, catalog: str):
+    def detach(self, catalog: str) -> None:
         logging.info(f"Detaching from {catalog}")
         self.con.execute(f"DETACH {catalog}")
 
-    def load_extension(self, extension: str, install=True):
+    def load_extension(self, extension: str, install=True) -> None:
         if install:
             logging.info(f"Installing extension {extension}")
             self.con.execute(f"INSTALL {extension}")
@@ -76,7 +76,7 @@ class DuckDb:
         database: str,
         password: str = None,
         port: int = 3306,
-    ):
+    ) -> None:
         logging.info(f"Connecting to MySQL as {name}")
         connection_string = f"host={host} user={user} port={port} database={database}"
         if password:
@@ -86,30 +86,91 @@ class DuckDb:
         self.con.execute(sql)
         logging.info(f"MySQL attached as {name}")
 
-    def connect_to_sqlite(self, name: str, path: str):
+    def connect_to_sqlite(self, name: str, path: str) -> None:
         logging.info(f"Connecting to SQLite as {name}")
         connection_string = f"ATTACH '{path}' as {name} (TYPE sqlite)"
         self.con.execute(connection_string)
         logging.info(f"SQLite attached as {name}")
 
-    def connect_to_duckdb(self, name: str, path: str):
+    def connect_to_duckdb(self, name: str, path: str) -> None:
         logging.info(f"Connecting to DuckDb as {name}")
         connection_string = f"ATTACH '{path}' as {name}"
         self.con.execute(connection_string)
         logging.info(f"DuckDb attached as {name}")
 
-    def drop_tables(self, tables: Sequence[str]):
+    def drop_tables(self, tables: Sequence[str]) -> None:
         for table in tables:
             logging.info(f"Dropping table {table}")
             self.con.execute(f"DROP TABLE {table}")
 
-    def persist_database(self, path: str, overwrite: bool = True):
+    def persist_database(self, path: str, overwrite: bool = True) -> None:
         if overwrite and os.path.exists(path):
             os.unlink(path)
         self.connect_to_duckdb(name="persist", path=path)
         current_catalog = self.current_catalog()
         self.con.execute(f"copy from database {current_catalog} to persist")
         self.detach("persist")
+
+    def write_table_to_disk(
+        self,
+        table: str,
+        dir: str,
+        data_format: str = "parquet",
+        compression: str = "brotli",
+        schema: str = None,
+    ) -> None:
+        """
+        Write to disk at the given directory
+        """
+        target_file = f"{table}.{data_format}.{compression}"
+        path = os.path.join(dir, target_file)
+        if schema:
+            source_table = f"{schema}.{table}"
+        else:
+            source_table = table
+        sql = f"""
+            COPY (SELECT * FROM {source_table})
+            TO '{path}'
+            (FORMAT {data_format}, COMPRESSION {compression})
+        """
+        logging.info(f"Copying table {source_table} into {path}")
+        logging.debug(f"Copy SQL: {sql}")
+        self.con.execute(sql)
+
+    def load_parquet_to_table(self, table: str, path: str, schema: str = None) -> None:
+        """
+        Take a table name and a path to a parquet file and load into said table
+        """
+        if schema:
+            target_table = f"{schema}.{table}"
+        else:
+            target_table = table
+        sql = f"""
+            create table {target_table} AS from read_parquet('{path}')
+        """
+        logging.info(f"Loading table {target_table} from file {path}")
+        logging.debug(f"Load SQL: {sql}")
+        self.con.execute(sql)
+
+    def load_parquet_directory(self, dir, compression="brotli", schema=None) -> int:
+        """
+        Looks for anything in the given directory of the format NNN.parquet.compression
+        and loads. Assumes that NNN is the target table name. Creates a table per
+        parquet file
+        """
+        data_format = "parquet"
+        files = os.listdir(dir)
+        target_ext = f".{data_format}.{compression}"
+        logging.info(f"Loading files in directory {dir}")
+        loaded_count = 0
+        for file in files:
+            if target_ext in file:
+                table = file.replace(target_ext, "")
+                path = os.path.join(dir, file)
+                logging.debug(f"Processing {file} to be loaded into {table}")
+                self.load_parquet_to_table(table, path, schema)
+                loaded_count += 1
+        return loaded_count
 
 
 class CreateIndex:
