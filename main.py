@@ -24,6 +24,16 @@ async def read_index():
     return FileResponse("static/index.html")
 
 
+@app.get("/probes/readiness")
+async def readiness():
+    return {"readiness": True}
+
+
+@app.get("/probes/liveness")
+async def readiness():
+    return {"liveness": True}
+
+
 @app.get("/species/search", summary="Find a species using Full Text Search (FTS)")
 async def search_species(q: str = Query(..., min_length=3), limit: Optional[int] = 100):
     """
