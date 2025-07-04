@@ -25,7 +25,7 @@ spec:
           imagePullPolicy: Always
           # envFrom:
             # - configMapRef:
-                # name: resolver-api-configmap
+                # name:  ensembl-species-search-duckdb-configmap
           command: ["uvicorn"]
           args: [
             "main.app",
