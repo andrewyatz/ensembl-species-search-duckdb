@@ -1,0 +1,15 @@
+# k8s manifest for service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ensembl-species-search-duckdb-svc
+  labels:
+    app: ensembl-species-search-duckdb-svc
+spec:
+  selector:
+    ensembl.web.api.name: ensembl-species-search-duckdb
+  type: ClusterIP
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80

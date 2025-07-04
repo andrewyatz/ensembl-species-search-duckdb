@@ -1,0 +1,36 @@
+# Deployment manifest for speceis search backed by duckdb
+# This is very basic manifest and assumes data (lookups) are in built
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ensembl-species-search-duckdb-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      ensembl.web.api.name: ensembl-species-search-duckdb
+  template:
+    metadata:
+      labels:
+        ensembl.web.api.name: ensembl-species-search-duckdb
+    spec:
+      imagePullSecrets:
+        - name: <IMAPGE_PULL_SECRET>
+      containers:
+        - name: ensembl-species-search-duckdb
+          image: <DOCKER_IMAGE>
+          ports:
+            - containerPort: 80
+          imagePullPolicy: Always
+          # envFrom:
+            # - configMapRef:
+                # name: resolver-api-configmap
+          command: ["uvicorn"]
+          args: [
+            "main.app",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "80",
+          ]
